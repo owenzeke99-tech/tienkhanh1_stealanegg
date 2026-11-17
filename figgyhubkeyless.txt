@@ -1,0 +1,602 @@
+
+-- [[ FIGGY HUB | PREMIUM GLASS KEY SYSTEM V3 ]]
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+
+-- CONFIGURATION
+local CORRECT_KEY = "FiggyHubKeyHdkeiwbLalowenJsmwoehhJdoeow"
+local KEY_LINK = "https://link4m.org/AfzIZ1"
+local LOAD_URL = "https://raw.githubusercontent.com/Figgyscript/Figgy/main/Figgyhub"
+
+local SAVE_FILE = "FiggyHub_KeyData.json"
+local SAVE_DURATION = 86400
+
+-- ==========================================
+-- KEY STORAGE SYSTEM
+-- ==========================================
+
+local function saveKey()
+    if type(writefile) ~= "function" then
+        return false
+    end
+
+    local data = {
+        key = CORRECT_KEY,
+        savedAt = os.time()
+    }
+
+    local success = pcall(function()
+        writefile(SAVE_FILE, HttpService:JSONEncode(data))
+    end)
+
+    return success
+end
+
+local function checkSavedKey()
+    if type(isfile) ~= "function"
+    or type(readfile) ~= "function" then
+        return false
+    end
+
+    local success, data = pcall(function()
+        if not isfile(SAVE_FILE) then
+            return nil
+        end
+
+        return HttpService:JSONDecode(readfile(SAVE_FILE))
+    end)
+
+    if not success or type(data) ~= "table" then
+        return false
+    end
+
+    if data.key ~= CORRECT_KEY
+    or type(data.savedAt) ~= "number" then
+        return false
+    end
+
+    local elapsed = os.time() - data.savedAt
+
+    if elapsed >= 0 and elapsed < SAVE_DURATION then
+        return true
+    end
+
+    if type(delfile) == "function" then
+        pcall(function()
+            delfile(SAVE_FILE)
+        end)
+    end
+
+    return false
+end
+
+-- ==========================================
+-- HUB LOADER
+-- ==========================================
+
+local function loadHub()
+    local success, err = pcall(function()
+        local source = game:HttpGet(LOAD_URL)
+        local compiled, compileError = loadstring(source)
+
+        assert(compiled, compileError or "Compilation failed")
+
+        compiled()
+    end)
+
+    if not success then
+        warn("Figgy Hub Load Error: " .. tostring(err))
+    end
+
+    return success
+end
+
+-- Automatically load when saved key is valid
+if checkSavedKey() then
+    if loadHub() then
+        return
+    end
+end
+
+-- ==========================================
+-- REMOVE OLD UI
+-- ==========================================
+
+local old = CoreGui:FindFirstChild("FiggyHubKeyUI")
+
+if old then
+    old:Destroy()
+end
+
+-- ==========================================
+-- MAIN GUI
+-- ==========================================
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FiggyHubKeyUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = CoreGui
+
+local function tween(object, duration, properties, style)
+    local animation = TweenService:Create(
+        object,
+        TweenInfo.new(
+            duration,
+            style or Enum.EasingStyle.Quart,
+            Enum.EasingDirection.Out
+        ),
+        properties
+    )
+
+    animation:Play()
+    return animation
+end
+
+-- Main Frame
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 400, 0, 310)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -155)
+MainFrame.BackgroundColor3 = Color3.fromRGB(17, 11, 29)
+MainFrame.BackgroundTransparency = 0.05
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+Instance.new("UICorner", MainFrame).CornerRadius =
+    UDim.new(0, 18)
+
+local BackgroundGradient = Instance.new("UIGradient", MainFrame)
+
+BackgroundGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(52, 25, 82)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 9, 22))
+})
+
+BackgroundGradient.Rotation = 45
+
+local MainStroke = Instance.new("UIStroke", MainFrame)
+MainStroke.Color = Color3.fromRGB(165, 85, 255)
+MainStroke.Thickness = 1.5
+MainStroke.Transparency = 0.2
+
+-- ==========================================
+-- TITLE
+-- ==========================================
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, -50, 0, 40)
+Title.Position = UDim2.new(0, 10, 0, 17)
+Title.BackgroundTransparency = 1
+Title.Text = "FIGGY HUB"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBlack
+Title.TextSize = 28
+Title.Parent = MainFrame
+
+local TitleGradient = Instance.new("UIGradient", Title)
+
+TitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(185, 120, 255))
+})
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(1, 0, 0, 20)
+Subtitle.Position = UDim2.new(0, 0, 0, 56)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "PREMIUM KEY VERIFICATION SYSTEM"
+Subtitle.TextColor3 = Color3.fromRGB(175, 150, 205)
+Subtitle.Font = Enum.Font.GothamMedium
+Subtitle.TextSize = 10
+Subtitle.Parent = MainFrame
+
+-- ==========================================
+-- CLOSE BUTTON
+-- ==========================================
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+CloseBtn.Position = UDim2.new(1, -42, 0, 14)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(55, 35, 75)
+CloseBtn.Text = "×"
+CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+CloseBtn.TextSize = 22
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Parent = MainFrame
+
+Instance.new("UICorner", CloseBtn).CornerRadius =
+    UDim.new(0, 9)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- ==========================================
+-- DIVIDER
+-- ==========================================
+
+local Divider = Instance.new("Frame")
+Divider.Size = UDim2.new(0, 340, 0, 1)
+Divider.Position = UDim2.new(0.5, -170, 0, 88)
+Divider.BackgroundColor3 = Color3.fromRGB(155, 90, 220)
+Divider.BackgroundTransparency = 0.55
+Divider.BorderSizePixel = 0
+Divider.Parent = MainFrame
+
+-- ==========================================
+-- KEY INPUT
+-- ==========================================
+
+local KeyBox = Instance.new("TextBox")
+KeyBox.Size = UDim2.new(0, 340, 0, 46)
+KeyBox.Position = UDim2.new(0.5, -170, 0, 104)
+KeyBox.BackgroundColor3 = Color3.fromRGB(30, 22, 45)
+KeyBox.PlaceholderText = "Enter your key here..."
+KeyBox.PlaceholderColor3 = Color3.fromRGB(145, 130, 165)
+KeyBox.Text = ""
+KeyBox.TextColor3 = Color3.new(1, 1, 1)
+KeyBox.TextSize = 14
+KeyBox.Font = Enum.Font.GothamMedium
+KeyBox.ClearTextOnFocus = false
+KeyBox.TextXAlignment = Enum.TextXAlignment.Center
+KeyBox.BorderSizePixel = 0
+KeyBox.Parent = MainFrame
+
+Instance.new("UICorner", KeyBox).CornerRadius =
+    UDim.new(0, 10)
+
+local InputStroke = Instance.new("UIStroke", KeyBox)
+InputStroke.Color = Color3.fromRGB(145, 75, 220)
+InputStroke.Transparency = 0.4
+InputStroke.Thickness = 1.2
+
+-- ==========================================
+-- INLINE NOTIFICATION
+-- ==========================================
+
+local Notification = Instance.new("Frame")
+Notification.Name = "InlineNotification"
+Notification.Size = UDim2.new(0, 340, 0, 55)
+Notification.Position = UDim2.new(0.5, -170, 0, 161)
+Notification.BackgroundColor3 = Color3.fromRGB(30, 20, 42)
+Notification.BackgroundTransparency = 0.12
+Notification.BorderSizePixel = 0
+Notification.Parent = MainFrame
+Notification.ClipsDescendants = true
+
+Instance.new("UICorner", Notification).CornerRadius =
+    UDim.new(0, 11)
+
+local NotiStroke = Instance.new("UIStroke", Notification)
+NotiStroke.Color = Color3.fromRGB(165, 85, 255)
+NotiStroke.Thickness = 1.2
+NotiStroke.Transparency = 0.35
+
+local NotiGradient = Instance.new("UIGradient", Notification)
+
+NotiGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(55, 32, 75)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 17, 38))
+})
+
+-- Icon Background
+local IconFrame = Instance.new("Frame")
+IconFrame.Size = UDim2.new(0, 35, 0, 35)
+IconFrame.Position = UDim2.new(0, 10, 0.5, -17.5)
+IconFrame.BackgroundColor3 = Color3.fromRGB(145, 65, 230)
+IconFrame.BackgroundTransparency = 0.75
+IconFrame.BorderSizePixel = 0
+IconFrame.Parent = Notification
+
+Instance.new("UICorner", IconFrame).CornerRadius =
+    UDim.new(0, 9)
+
+local Icon = Instance.new("TextLabel")
+Icon.Size = UDim2.new(1, 0, 1, 0)
+Icon.BackgroundTransparency = 1
+Icon.Text = "✦"
+Icon.TextColor3 = Color3.fromRGB(210, 165, 255)
+Icon.Font = Enum.Font.GothamBlack
+Icon.TextSize = 19
+Icon.Parent = IconFrame
+
+-- Notification Title
+local NotiTitle = Instance.new("TextLabel")
+NotiTitle.Size = UDim2.new(1, -65, 0, 20)
+NotiTitle.Position = UDim2.new(0, 55, 0, 7)
+NotiTitle.BackgroundTransparency = 1
+NotiTitle.Text = "SYSTEM READY"
+NotiTitle.TextColor3 = Color3.fromRGB(220, 185, 255)
+NotiTitle.Font = Enum.Font.GothamBold
+NotiTitle.TextSize = 11
+NotiTitle.TextXAlignment = Enum.TextXAlignment.Left
+NotiTitle.Parent = Notification
+
+-- Notification Description
+local NotiDescription = Instance.new("TextLabel")
+NotiDescription.Size = UDim2.new(1, -65, 0, 19)
+NotiDescription.Position = UDim2.new(0, 55, 0, 27)
+NotiDescription.BackgroundTransparency = 1
+NotiDescription.Text = "Enter your key to continue."
+NotiDescription.TextColor3 = Color3.fromRGB(185, 170, 205)
+NotiDescription.Font = Enum.Font.GothamMedium
+NotiDescription.TextSize = 10
+NotiDescription.TextXAlignment = Enum.TextXAlignment.Left
+NotiDescription.Parent = Notification
+
+-- Progress Line
+local ProgressBG = Instance.new("Frame")
+ProgressBG.Size = UDim2.new(1, 0, 0, 2)
+ProgressBG.Position = UDim2.new(0, 0, 1, -2)
+ProgressBG.BackgroundColor3 = Color3.fromRGB(75, 55, 95)
+ProgressBG.BorderSizePixel = 0
+ProgressBG.Parent = Notification
+
+local Progress = Instance.new("Frame")
+Progress.Size = UDim2.new(1, 0, 1, 0)
+Progress.BackgroundColor3 = Color3.fromRGB(180, 110, 255)
+Progress.BorderSizePixel = 0
+Progress.Parent = ProgressBG
+
+-- Notification Function
+local function showNotification(title, description, color, icon)
+
+    Icon.Text = icon
+    Icon.TextColor3 = color
+    IconFrame.BackgroundColor3 = color
+
+    NotiTitle.Text = title
+    NotiTitle.TextColor3 = color
+
+    NotiDescription.Text = description
+
+    NotiStroke.Color = color
+    Progress.BackgroundColor3 = color
+
+    Notification.BackgroundTransparency = 0.3
+    Notification.Position = UDim2.new(0.5, -170, 0, 164)
+
+    tween(Notification, 0.2, {
+        Position = UDim2.new(0.5, -170, 0, 161),
+        BackgroundTransparency = 0.12
+    })
+
+    Progress.Size = UDim2.new(1, 0, 1, 0)
+
+    tween(Progress, 3, {
+        Size = UDim2.new(0, 0, 1, 0)
+    }, Enum.EasingStyle.Linear)
+end
+
+-- ==========================================
+-- BUTTON CREATOR
+-- ==========================================
+
+local function createButton(name, position, color)
+
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(0, 160, 0, 45)
+    Button.Position = position
+    Button.BackgroundColor3 = color
+    Button.BorderSizePixel = 0
+    Button.Text = name
+    Button.TextColor3 = Color3.new(1, 1, 1)
+    Button.TextSize = 13
+    Button.Font = Enum.Font.GothamBold
+    Button.AutoButtonColor = false
+    Button.Parent = MainFrame
+
+    Instance.new("UICorner", Button).CornerRadius =
+        UDim.new(0, 10)
+
+    local ButtonStroke = Instance.new("UIStroke", Button)
+    ButtonStroke.Color = Color3.fromRGB(200, 150, 255)
+    ButtonStroke.Transparency = 0.65
+
+    Button.MouseEnter:Connect(function()
+        tween(Button, 0.2, {
+            BackgroundTransparency = 0.12
+        })
+    end)
+
+    Button.MouseLeave:Connect(function()
+        tween(Button, 0.2, {
+            BackgroundTransparency = 0
+        })
+    end)
+
+    return Button
+end
+
+-- GET KEY
+local GetKeyBtn = createButton(
+    "GET KEY",
+    UDim2.new(0.5, -170, 0, 235),
+    Color3.fromRGB(75, 42, 115)
+)
+
+-- CHECK KEY
+local CheckKeyBtn = createButton(
+    "CHECK KEY",
+    UDim2.new(0.5, 10, 0, 235),
+    Color3.fromRGB(145, 65, 230)
+)
+
+-- ==========================================
+-- SHAKE ANIMATION
+-- ==========================================
+
+local isShaking = false
+
+local function shake()
+
+    if isShaking then return end
+    isShaking = true
+
+    local origin = MainFrame.Position
+
+    for _, offset in ipairs({
+        7, -7, 5, -5, 2, -2, 0
+    }) do
+
+        local animation = tween(MainFrame, 0.045, {
+            Position = UDim2.new(
+                origin.X.Scale,
+                origin.X.Offset + offset,
+                origin.Y.Scale,
+                origin.Y.Offset
+            )
+        }, Enum.EasingStyle.Sine)
+
+        animation.Completed:Wait()
+    end
+
+    MainFrame.Position = origin
+    isShaking = false
+end
+
+-- ==========================================
+-- GET KEY ACTION
+-- ==========================================
+
+GetKeyBtn.MouseButton1Click:Connect(function()
+
+    if type(setclipboard) == "function" then
+
+        local success = pcall(function()
+            setclipboard(KEY_LINK)
+        end)
+
+        if success then
+            showNotification(
+                "LINK COPIED",
+                "Your key link is ready to use.",
+                Color3.fromRGB(190, 130, 255),
+                "⧉"
+            )
+        else
+            showNotification(
+                "COPY FAILED",
+                "Unable to copy the key link.",
+                Color3.fromRGB(255, 190, 90),
+                "!"
+            )
+        end
+
+    else
+
+        showNotification(
+            "CLIPBOARD UNAVAILABLE",
+            "Your executor does not support clipboard.",
+            Color3.fromRGB(255, 190, 90),
+            "!"
+        )
+
+    end
+end)
+
+-- ==========================================
+-- CHECK KEY ACTION
+-- ==========================================
+
+local isChecking = false
+
+CheckKeyBtn.MouseButton1Click:Connect(function()
+
+    if isChecking then return end
+    isChecking = true
+
+    if KeyBox.Text == CORRECT_KEY then
+
+        -- Save accepted key locally
+        local saved = saveKey()
+
+        showNotification(
+            "KEY VERIFIED",
+            "Your key has been accepted successfully.",
+            Color3.fromRGB(100, 255, 170),
+            "✓"
+        )
+
+        if not saved then
+            warn("Figgy Hub: Local key storage is unavailable.")
+        end
+
+        tween(InputStroke, 0.2, {
+            Color = Color3.fromRGB(80, 255, 165)
+        })
+
+        task.wait(0.7)
+
+        tween(MainFrame, 0.3, {
+            BackgroundTransparency = 1,
+            Position = MainFrame.Position + UDim2.new(0, 0, 0, 15)
+        })
+
+        task.wait(0.35)
+
+        ScreenGui:Destroy()
+
+        loadHub()
+
+    else
+
+        KeyBox.Text = ""
+
+        showNotification(
+            "INVALID KEY",
+            "Incorrect key. Please check and try again.",
+            Color3.fromRGB(255, 105, 135),
+            "!"
+        )
+
+        tween(InputStroke, 0.15, {
+            Color = Color3.fromRGB(255, 65, 95)
+        })
+
+        task.spawn(shake)
+
+        task.delay(0.8, function()
+
+            if InputStroke.Parent then
+                tween(InputStroke, 0.3, {
+                    Color = Color3.fromRGB(145, 75, 220)
+                })
+            end
+
+        end)
+
+    end
+
+    isChecking = false
+end)
+
+-- ==========================================
+-- INITIAL NOTIFICATION
+-- ==========================================
+
+showNotification(
+    "SYSTEM READY",
+    "Enter your key to continue.",
+    Color3.fromRGB(190, 130, 255),
+    "✦"
+)
+
+-- ==========================================
+-- ENTRANCE ANIMATION
+-- ==========================================
+
+MainFrame.BackgroundTransparency = 1
+MainFrame.Size = UDim2.new(0, 370, 0, 280)
+
+tween(MainFrame, 0.45, {
+    Size = UDim2.new(0, 400, 0, 310),
+    BackgroundTransparency = 0.05
+}, Enum.EasingStyle.Back)
+
+print("Figgy Hub Key System Loaded!")
